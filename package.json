@@ -1,5 +1,4 @@
 {
-  "private": true,
   "displayName": "Homebridge AmbiClimate Platform",
   "name": "homebridge-ambiclimate-platform",
   "version": "1.0.0",
