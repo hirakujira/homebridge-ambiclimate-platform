@@ -27,6 +27,12 @@
         "type": "string",
         "required": true
       },
+      "showFeedbacks": {
+        "title": "Show Feedbacks",
+        "type": "boolean",
+        "default": false,
+        "description": "Show comfortable mode feedbacks as switches"
+      },
       "accessories": {
         "type": "array",
         "items": {
