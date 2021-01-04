@@ -67,11 +67,6 @@ export class AmbiClimateAirConditionAccessory {
     this.switchServcie.getCharacteristic(this.platform.Characteristic.On)
       .on('get', this.switchServiceOnGet.bind(this))
       .on('set', this.switchServiceOnSet.bind(this));
-
-    // // update every 5 minutes
-    // setInterval(() => {
-
-    // }, 5 * 60 * 1000);
   }
 
   temperatureServiceCurrentTemperatureGet(callback: CharacteristicGetCallback) {
@@ -79,11 +74,8 @@ export class AmbiClimateAirConditionAccessory {
       if (!err) {
         this.currentTemperature = data[0].value;
         this.temperatureService.updateCharacteristic(this.platform.Characteristic.CurrentTemperature, data[0].value);
-        this.log.info('Current Temp ' + data[0].value);
       }
     });
-
-    this.log.info('Current Temp1 ' + this.currentTemperature);
     callback(null, this.currentTemperature);
   }
 

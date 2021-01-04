@@ -1,7 +1,7 @@
 {
   "displayName": "Homebridge AmbiClimate Platform",
   "name": "homebridge-ambiclimate-platform",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "Control your Ambi Climate devices via HomeKit",
   "license": "Apache-2.0",
   "repository": {
