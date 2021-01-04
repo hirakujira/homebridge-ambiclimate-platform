@@ -5,11 +5,46 @@
   "schema": {
     "type": "object",
     "properties": {
-      "name": {
-        "title": "Name",
+      "clientId": {
+        "title": "Client ID",
         "type": "string",
         "required": true,
-        "default": "Example Dynamic Platform"
+        "pattern": "^([A-Fa-f0-9]{8})-([A-Fa-f0-9]{4})-([A-Fa-f0-9]{4})-([A-Fa-f0-9]{4})-([A-Fa-f0-9]{12})$"
+      },
+      "clientSecret": {
+        "title": "Client Secret",
+        "type": "string",
+        "required": true,
+        "pattern": "^([A-Fa-f0-9]{8})-([A-Fa-f0-9]{4})-([A-Fa-f0-9]{4})-([A-Fa-f0-9]{4})-([A-Fa-f0-9]{12})$"
+      },
+      "username": {
+        "title": "User Name",
+        "type": "string",
+        "required": true
+      },
+      "password": {
+        "title": "Password",
+        "type": "string",
+        "required": true
+      },
+      "accessories": {
+        "type": "array",
+        "items": {
+          "title": "Devices",
+          "type": "object",
+          "properties": {
+            "roomName": {
+              "title": "Room Name",
+              "type": "string",
+              "required": true
+            },
+            "locationName": {
+              "title": "Location Name",
+              "type": "string",
+              "required": true
+            }
+          }
+        }
       }
     }
   }
