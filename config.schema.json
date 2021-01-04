@@ -30,7 +30,6 @@
       "accessories": {
         "type": "array",
         "items": {
-          "title": "Devices",
           "type": "object",
           "properties": {
             "roomName": {
