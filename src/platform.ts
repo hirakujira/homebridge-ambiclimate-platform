@@ -4,7 +4,6 @@ import { PLATFORM_NAME, PLUGIN_NAME } from './settings';
 import { AmbiClimateAirConditionAccessory } from './airconditionAccessory';
 import { AmbiClimateFeedbackAccessory } from './feedbackAccessory';
 import ambiclimate from 'node-ambiclimate';
-import fs from 'fs';
 
 export interface Device {
   roomName: string;
@@ -49,48 +48,6 @@ export class AmbiClimatePlatform implements DynamicPlatformPlugin {
       // run the method to discover / register your devices as accessories
       this.discoverDevices();
     });
-  }
-
-  setupTokenConfig() {
-
-    if (fs.existsSync(this.storagePath)) {
-      try {
-
-        // load token and terminalId from config file
-        const data = fs.readFileSync(this.storagePath, 'utf8');
-        this.token = data;
-      } catch (error) {
-        this.log.error('Cannot read file from data. Please check content of ' +
-          this.storagePath +
-          ' ,or remove it to create a new one automatically.');
-      }
-    } else {
-      this.log.info('Cannot found token file, create a new one');
-
-      fs.writeFile(this.storagePath, '', (error) => {
-        if (error) {
-          this.log.error('Cannot create new file to path: ' + this.storagePath);
-        } else {
-          this.log.info('Created new file to path: ' + this.storagePath);
-        }
-      });
-    }
-  }
-
-  updateTokenConfig(token: string) {
-    try {
-      fs.writeFileSync(this.storagePath, token, 'utf8');
-      this.log.debug('Token config updated: ' + this.storagePath);
-
-      return true;
-
-    } catch (error) {
-      this.log.error('Cannot write file from data. Please check content of ' +
-        this.storagePath +
-        ', or remove it to create a new one automatically.' + error);
-    }
-
-    return false;
   }
 
   /**
@@ -138,8 +95,6 @@ export class AmbiClimatePlatform implements DynamicPlatformPlugin {
       if (existingAccessory) {
         // the accessory already exists
         if (device) {
-          this.log.info('Restoring existing accessory from cache:', existingAccessory.displayName);
-
           // create the accessory handler for the restored accessory
           new AmbiClimateAirConditionAccessory(this, existingAccessory);
 
@@ -147,8 +102,6 @@ export class AmbiClimatePlatform implements DynamicPlatformPlugin {
           this.api.updatePlatformAccessories([existingAccessory]);
         }
       } else {
-        // the accessory does not yet exist, so we need to create it
-        this.log.info('Adding new accessory:', device.locationName + device.roomName);
 
         // create a new accessory
         const accessory = new this.api.platformAccessory(device.locationName + device.roomName, uuid);
@@ -173,14 +126,10 @@ export class AmbiClimatePlatform implements DynamicPlatformPlugin {
         if (existingFeedback) {
 
           if (device) {
-            this.log.info('Restoring existing accessory from cache:', existingFeedback.displayName);
-
             new AmbiClimateFeedbackAccessory(this, existingFeedback);
             this.api.updatePlatformAccessories([existingFeedback]);
           }
         } else {
-          this.log.info('Adding new accessory:', device.locationName + device.roomName);
-
           const accessory = new this.api.platformAccessory(device.locationName + device.roomName + ' Feedbacks', feedbackUuid);
           accessory.context.device = device;
 

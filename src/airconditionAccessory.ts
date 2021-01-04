@@ -14,6 +14,8 @@ export class AmbiClimateAirConditionAccessory {
   private switchServcie: Service;
   private log: Logger;
   private client;
+  private currentTemperature = 0.0;
+  private currentRelativeHumidity = 0.0;
   private rotationSpeed = 0;
   private isFanOn = false;
   private settings = {
@@ -65,26 +67,35 @@ export class AmbiClimateAirConditionAccessory {
     this.switchServcie.getCharacteristic(this.platform.Characteristic.On)
       .on('get', this.switchServiceOnGet.bind(this))
       .on('set', this.switchServiceOnSet.bind(this));
+
+    // // update every 5 minutes
+    // setInterval(() => {
+
+    // }, 5 * 60 * 1000);
   }
 
   temperatureServiceCurrentTemperatureGet(callback: CharacteristicGetCallback) {
     this.client.sensor_temperature(this.client.settings, (err, data) => {
       if (!err) {
+        this.currentTemperature = data[0].value;
         this.temperatureService.updateCharacteristic(this.platform.Characteristic.CurrentTemperature, data[0].value);
+        this.log.info('Current Temp ' + data[0].value);
       }
     });
 
-    callback(null, 0.0);
+    this.log.info('Current Temp1 ' + this.currentTemperature);
+    callback(null, this.currentTemperature);
   }
 
   humidityServiceCurrentRelativeHumidityGet(callback: CharacteristicGetCallback) {
     this.client.sensor_humidity(this.client.settings, (err, data) => {
       if (!err) {
+        this.currentRelativeHumidity = data[0].value;
         this.humidityService.updateCharacteristic(this.platform.Characteristic.CurrentRelativeHumidity, data[0].value);
       }
     });
 
-    callback(null, 0.0);
+    callback(null, this.currentRelativeHumidity);
   }
 
   fanServiceOnGet(callback: CharacteristicGetCallback) {
@@ -102,7 +113,7 @@ export class AmbiClimateAirConditionAccessory {
       }
     });
 
-    callback(null, false);
+    callback(null, this.isFanOn);
   }
 
   fanServiceOnSet(value: CharacteristicValue, callback: CharacteristicSetCallback) {
@@ -152,7 +163,7 @@ export class AmbiClimateAirConditionAccessory {
       }
     });
 
-    callback(null, 0);
+    callback(null, this.rotationSpeed);
   }
 
   fanServiceRotationSpeedSet(value: CharacteristicValue, callback: CharacteristicSetCallback) {
