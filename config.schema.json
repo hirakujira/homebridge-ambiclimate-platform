@@ -33,6 +33,12 @@
         "default": false,
         "description": "Show comfortable mode feedbacks as switches"
       },
+      "heaterCoolerMode": {
+        "title": "Heater Cooler Mode",
+        "type": "boolean",
+        "default": false,
+        "description": "Show device as heater cooler (air condition). Please read README.md to get more infomation."
+      },
       "accessories": {
         "type": "array",
         "items": {

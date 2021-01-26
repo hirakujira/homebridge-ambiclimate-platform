@@ -3,6 +3,7 @@ import { API, DynamicPlatformPlugin, Logger, PlatformAccessory, PlatformConfig, 
 import { PLATFORM_NAME, PLUGIN_NAME } from './settings';
 import { AmbiClimateAirConditionAccessory } from './airconditionAccessory';
 import { AmbiClimateFeedbackAccessory } from './feedbackAccessory';
+import { AmbiClimateHeaterCoolerAccessory } from './heaterCoolerAccessory';
 import ambiclimate from 'node-ambiclimate';
 
 export interface Device {
@@ -22,7 +23,7 @@ export class AmbiClimatePlatform implements DynamicPlatformPlugin {
   // this is used to track restored cached accessories
   public readonly accessories: PlatformAccessory[] = [];
   public client;
-  private storagePath = '';
+  public storagePath = '';
   private token = '';
 
   constructor(
@@ -36,7 +37,7 @@ export class AmbiClimatePlatform implements DynamicPlatformPlugin {
     // in order to ensure they weren't added to homebridge already. This event can also be used
     // to start discovery of new accessories.
     this.api.on('didFinishLaunching', async () => {
-      this.storagePath = api.user.storagePath() + '/' + 'ambiclimate_token';
+      this.storagePath = api.user.storagePath() + '/' + 'ambiclimate_settings.json';
 
       this.client = new ambiclimate(
         this.config.clientId,
@@ -72,7 +73,11 @@ export class AmbiClimatePlatform implements DynamicPlatformPlugin {
       for (const device of devices as Array<Device>) {
         const uuid = this.api.hap.uuid.generate(device.locationName + device.roomName);
         const feedbackUuid = this.api.hap.uuid.generate(device.locationName + device.roomName + 'feedback');
-        if (existingAccessory.UUID === uuid || (this.config.showFeedbacks && existingAccessory.UUID === feedbackUuid)) {
+        const heaterCoolerUuid = this.api.hap.uuid.generate(device.locationName + device.roomName + 'heatercooler');
+        if (existingAccessory.UUID === uuid ||
+          (this.config.showFeedbacks && existingAccessory.UUID === feedbackUuid) ||
+          (this.config.heaterCoolerMode && existingAccessory.UUID === heaterCoolerUuid)
+        ) {
           accessoryFound = true;
         }
       }
@@ -87,6 +92,7 @@ export class AmbiClimatePlatform implements DynamicPlatformPlugin {
 
       const uuid = this.api.hap.uuid.generate(device.locationName + device.roomName);
       const feedbackUuid = this.api.hap.uuid.generate(device.locationName + device.roomName + 'feedback');
+      const heaterCoolerUuid = this.api.hap.uuid.generate(device.locationName + device.roomName + 'heatercooler');
 
       // see if an accessory with the same uuid has already been registered and restored from
       // the cached devices we stored in the `configureAccessory` method above
@@ -136,6 +142,28 @@ export class AmbiClimatePlatform implements DynamicPlatformPlugin {
           this.log.info(accessory.UUID);
 
           new AmbiClimateFeedbackAccessory(this, accessory);
+          this.api.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [accessory]);
+        }
+      }
+
+      if (this.config.heaterCoolerMode) {
+
+        // copy above code
+        const existingCoolerHeater = this.accessories.find(accessory => accessory.UUID === heaterCoolerUuid);
+
+        if (existingCoolerHeater) {
+
+          if (device) {
+            new AmbiClimateHeaterCoolerAccessory(this, existingCoolerHeater);
+            this.api.updatePlatformAccessories([existingCoolerHeater]);
+          }
+        } else {
+          const accessory = new this.api.platformAccessory(device.locationName + device.roomName + ' CoolerHeater', heaterCoolerUuid);
+          accessory.context.device = device;
+
+          this.log.info(accessory.UUID);
+
+          new AmbiClimateHeaterCoolerAccessory(this, accessory);
           this.api.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [accessory]);
         }
       }
