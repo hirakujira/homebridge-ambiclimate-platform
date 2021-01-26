@@ -226,10 +226,34 @@ export class AmbiClimateAirConditionAccessory {
 
     if (value === true) {
       this.log.debug('Putting into comfort mode');
-      this.client.comfort(this.settings, null);
+      this.client.comfort(this.settings, (err, data) => {
+        if (!err) {
+          try {
+            this.switchServcie.updateCharacteristic(this.platform.Characteristic.On, true);
+          } catch (error) {
+            if (data) {
+              this.log.error('Set switch status failed.' + JSON.stringify(data));
+            } else {
+              this.log.error('Set switch status failed.' + error);
+            }
+          }
+        }
+      });
     } else {
       this.log.debug('Turning off');
-      this.client.off(null);
+      this.client.off(this.settings, (err, data) => {
+        if (!err) {
+          try {
+            this.switchServcie.updateCharacteristic(this.platform.Characteristic.On, false);
+          } catch (error) {
+            if (data) {
+              this.log.error('Set switch status failed.' + JSON.stringify(data));
+            } else {
+              this.log.error('Set switch status failed.' + error);
+            }
+          }
+        }
+      });
     }
 
     // you must call the callback function

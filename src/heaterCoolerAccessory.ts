@@ -71,7 +71,7 @@ export class AmbiClimateHeaterCoolerAccessory {
   }
 
   serviceCurrentTemperatureGet(callback: CharacteristicGetCallback) {
-    this.client.sensor_temperature(this.client.settings, (err, data) => {
+    this.client.sensor_temperature(this.settings, (err, data) => {
       if (!err) {
         this.currentTemperature = data[0].value;
         this.service.updateCharacteristic(this.platform.Characteristic.CurrentTemperature, data[0].value);
@@ -113,7 +113,7 @@ export class AmbiClimateHeaterCoolerAccessory {
       this.settings.value = this.currentTemperature;
       this.client.temperature(this.settings, null);
     } else {
-      this.client.off(null);
+      this.client.off(this.settings, null);
     }
 
     // you must call the callback function
