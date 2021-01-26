@@ -12,8 +12,8 @@ export class AmbiClimateFeedbackAccessory {
   private log: Logger;
   private client;
   private settings = {
-    roomName: '',
-    locationName: '',
+    room_name: '',
+    location_name: '',
     value: '',
   };
 
@@ -25,8 +25,8 @@ export class AmbiClimateFeedbackAccessory {
     this.log = this.platform.log;
     this.client = this.platform.client;
 
-    this.settings.roomName = this.accessory.context.device.roomName;
-    this.settings.locationName = this.accessory.context.device.locationName;
+    this.settings.room_name = this.accessory.context.device.roomName;
+    this.settings.location_name = this.accessory.context.device.locationName;
 
     // set accessory information
     this.accessory.getService(this.platform.Service.AccessoryInformation)!

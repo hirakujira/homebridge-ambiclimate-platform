@@ -19,8 +19,8 @@ export class AmbiClimateAirConditionAccessory {
   private rotationSpeed = 0;
   private isFanOn = false;
   private settings = {
-    roomName: '',
-    locationName: '',
+    room_name: '',
+    location_name: '',
   };
 
   constructor(
@@ -31,8 +31,8 @@ export class AmbiClimateAirConditionAccessory {
     this.log = this.platform.log;
     this.client = this.platform.client;
 
-    this.settings.roomName = this.accessory.context.device.roomName;
-    this.settings.locationName = this.accessory.context.device.locationName;
+    this.settings.room_name = this.accessory.context.device.roomName;
+    this.settings.location_name = this.accessory.context.device.locationName;
 
     // set accessory information
     this.accessory.getService(this.platform.Service.AccessoryInformation)!
@@ -70,20 +70,36 @@ export class AmbiClimateAirConditionAccessory {
   }
 
   temperatureServiceCurrentTemperatureGet(callback: CharacteristicGetCallback) {
-    this.client.sensor_temperature(this.client.settings, (err, data) => {
+    this.client.sensor_temperature(this.settings, (err, data) => {
       if (!err) {
-        this.currentTemperature = data[0].value;
-        this.temperatureService.updateCharacteristic(this.platform.Characteristic.CurrentTemperature, data[0].value);
+        try {
+          this.currentTemperature = data[0].value;
+          this.temperatureService.updateCharacteristic(this.platform.Characteristic.CurrentTemperature, data[0].value);
+        } catch (error) {
+          if (data) {
+            this.log.error('Get current tempature failed.' + JSON.stringify(data));
+          } else {
+            this.log.error('Get current tempature failed.' + error);
+          }
+        }
       }
     });
     callback(null, this.currentTemperature);
   }
 
   humidityServiceCurrentRelativeHumidityGet(callback: CharacteristicGetCallback) {
-    this.client.sensor_humidity(this.client.settings, (err, data) => {
+    this.client.sensor_humidity(this.settings, (err, data) => {
       if (!err) {
-        this.currentRelativeHumidity = data[0].value;
-        this.humidityService.updateCharacteristic(this.platform.Characteristic.CurrentRelativeHumidity, data[0].value);
+        try {
+          this.currentRelativeHumidity = data[0].value;
+          this.humidityService.updateCharacteristic(this.platform.Characteristic.CurrentRelativeHumidity, data[0].value);
+        } catch (error) {
+          if (data) {
+            this.log.error('Get current relative humidity failed.' + JSON.stringify(data));
+          } else {
+            this.log.error('Get current relative humidity failed.' + error);
+          }
+        }
       }
     });
 
@@ -91,17 +107,27 @@ export class AmbiClimateAirConditionAccessory {
   }
 
   fanServiceOnGet(callback: CharacteristicGetCallback) {
-    this.client.mode(this.settings).then(data => {
-      switch (data.mode) {
-        case 'Off':
-        case 'Manual':
-          this.isFanOn = false;
-          this.fanService.updateCharacteristic(this.platform.Characteristic.On, false);
-          break;
-        default:
-          this.isFanOn = true;
-          this.fanService.updateCharacteristic(this.platform.Characteristic.On, true);
-          break;
+    this.client.mode(this.settings, (err, data) => {
+      if (!err) {
+        try {
+          switch (data.mode) {
+            case 'Off':
+            case 'Manual':
+              this.isFanOn = false;
+              this.fanService.updateCharacteristic(this.platform.Characteristic.On, false);
+              break;
+            default:
+              this.isFanOn = true;
+              this.fanService.updateCharacteristic(this.platform.Characteristic.On, true);
+              break;
+          }
+        } catch (error) {
+          if (data) {
+            this.log.error('Get current fan status failed.' + JSON.stringify(data));
+          } else {
+            this.log.error('Get current fan status failed.' + error);
+          }
+        }
       }
     });
 
@@ -118,40 +144,50 @@ export class AmbiClimateAirConditionAccessory {
   }
 
   fanServiceRotationSpeedGet(callback: CharacteristicGetCallback) {
-    this.client.mode(this.settings).then(data => {
-      switch (data.mode) {
-        case 'Off':
-        case 'Manual':
-          this.fanService.updateCharacteristic(this.platform.Characteristic.RotationSpeed, 0);
-          break;
-        default:
-          this.client.appliance_states(this.settings).then(data => {
-            this.rotationSpeed = 0.0;
-            switch (data.data[0].fan) {
-              case 'High':
-                this.rotationSpeed = 100.0;
-                break;
-              case 'Med-High':
-                this.rotationSpeed = 75.0;
-                break;
-              case 'Auto':
-              case 'Med':
-                this.rotationSpeed = 50.0;
-                break;
-              case 'Quiet':
-              case 'Med-Low':
-                this.rotationSpeed = 38.0;
-                break;
-              case 'Low':
-                this.rotationSpeed = 25.0;
-                break;
-              default:
+    this.client.mode(this.settings, (err, data) => {
+      if (!err) {
+        try {
+          switch (data.mode) {
+            case 'Off':
+            case 'Manual':
+              this.fanService.updateCharacteristic(this.platform.Characteristic.RotationSpeed, 0);
+              break;
+            default:
+              this.client.appliance_states(this.settings).then(data => {
                 this.rotationSpeed = 0.0;
-                break;
-            }
-            this.fanService.updateCharacteristic(this.platform.Characteristic.RotationSpeed, this.rotationSpeed);
-          });
-          break;
+                switch (data.data[0].fan) {
+                  case 'High':
+                    this.rotationSpeed = 100.0;
+                    break;
+                  case 'Med-High':
+                    this.rotationSpeed = 75.0;
+                    break;
+                  case 'Auto':
+                  case 'Med':
+                    this.rotationSpeed = 50.0;
+                    break;
+                  case 'Quiet':
+                  case 'Med-Low':
+                    this.rotationSpeed = 38.0;
+                    break;
+                  case 'Low':
+                    this.rotationSpeed = 25.0;
+                    break;
+                  default:
+                    this.rotationSpeed = 0.0;
+                    break;
+                }
+                this.fanService.updateCharacteristic(this.platform.Characteristic.RotationSpeed, this.rotationSpeed);
+              });
+              break;
+          }
+        } catch (error) {
+          if (data) {
+            this.log.error('Get current rotation speed failed.' + JSON.stringify(data));
+          } else {
+            this.log.error('Get current rotation speed failed.' + error);
+          }
+        }
       }
     });
 
@@ -171,7 +207,15 @@ export class AmbiClimateAirConditionAccessory {
   switchServiceOnGet(callback: CharacteristicGetCallback) {
     this.client.mode(this.settings, (err, data) => {
       if (!err) {
-        this.switchServcie.updateCharacteristic(this.platform.Characteristic.On, data.mode !== 'Off' && data.mode !== 'Manual');
+        try {
+          this.switchServcie.updateCharacteristic(this.platform.Characteristic.On, data.mode !== 'Off' && data.mode !== 'Manual');
+        } catch (error) {
+          if (data) {
+            this.log.error('Get switch status failed.' + JSON.stringify(data));
+          } else {
+            this.log.error('Get switch status failed.' + error);
+          }
+        }
       }
     });
 
