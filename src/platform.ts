@@ -24,7 +24,7 @@ export class AmbiClimatePlatform implements DynamicPlatformPlugin {
   public readonly accessories: PlatformAccessory[] = [];
   public client;
   public storagePath = '';
-  private token = '';
+  public devicePair = {};
 
   constructor(
     public readonly log: Logger,
@@ -38,6 +38,11 @@ export class AmbiClimatePlatform implements DynamicPlatformPlugin {
     // to start discovery of new accessories.
     this.api.on('didFinishLaunching', async () => {
       this.storagePath = api.user.storagePath() + '/' + 'ambiclimate_settings.json';
+
+      if (!this.checkConfigValid()) {
+        this.log.error('Config file is not valid, please check.');
+        return;
+      }
 
       this.client = new ambiclimate(
         this.config.clientId,
@@ -60,6 +65,10 @@ export class AmbiClimatePlatform implements DynamicPlatformPlugin {
 
     // add the restored accessory to the accessories cache so we can track if it has already been registered
     this.accessories.push(accessory);
+  }
+
+  checkConfigValid() {
+    return this.config.clientId && this.config.clientSecret && this.config.username && this.config.password;
   }
 
   discoverDevices() {

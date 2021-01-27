@@ -1,6 +1,7 @@
 import { Service, Logger, PlatformAccessory, CharacteristicValue, CharacteristicSetCallback, CharacteristicGetCallback } from 'homebridge';
 
 import { AmbiClimatePlatform } from './platform';
+import { AmbiClimateHeaterCoolerAccessory } from './heaterCoolerAccessory';
 
 /**
  * Platform Accessory
@@ -10,14 +11,15 @@ import { AmbiClimatePlatform } from './platform';
 export class AmbiClimateAirConditionAccessory {
   private temperatureService: Service;
   private humidityService: Service;
-  private fanService: Service;
-  private switchServcie: Service;
+  public fanService: Service;
+  public switchServcie: Service;
   private log: Logger;
   private client;
   private currentTemperature = 0.0;
   private currentRelativeHumidity = 0.0;
-  private rotationSpeed = 0;
-  private isFanOn = false;
+  public rotationSpeed = 0;
+  public isFanOn = false;
+  private uuid = '';
   private settings = {
     room_name: '',
     location_name: '',
@@ -67,6 +69,15 @@ export class AmbiClimateAirConditionAccessory {
     this.switchServcie.getCharacteristic(this.platform.Characteristic.On)
       .on('get', this.switchServiceOnGet.bind(this))
       .on('set', this.switchServiceOnSet.bind(this));
+
+    this.uuid = this.platform.api.hap.uuid.generate(this.settings.location_name + this.settings.room_name);
+    if (!this.platform.devicePair[this.uuid]) {
+      this.platform.devicePair[this.uuid] = {
+        'switch': this,
+      };
+    } else {
+      this.platform.devicePair[this.uuid]['switch'] = this;
+    }
   }
 
   temperatureServiceCurrentTemperatureGet(callback: CharacteristicGetCallback) {
@@ -144,6 +155,12 @@ export class AmbiClimateAirConditionAccessory {
   }
 
   fanServiceRotationSpeedGet(callback: CharacteristicGetCallback) {
+    this.updateFanRotationSpeed();
+
+    callback(null, this.rotationSpeed);
+  }
+
+  updateFanRotationSpeed() {
     this.client.mode(this.settings, (err, data) => {
       if (!err) {
         try {
@@ -190,13 +207,10 @@ export class AmbiClimateAirConditionAccessory {
         }
       }
     });
-
-    callback(null, this.rotationSpeed);
   }
 
   fanServiceRotationSpeedSet(value: CharacteristicValue, callback: CharacteristicSetCallback) {
-
-    // no implementation
+    // no implementation for setter
     setTimeout(() => {
       this.fanService.updateCharacteristic(this.platform.Characteristic.RotationSpeed, this.rotationSpeed);
     }, 1000);
@@ -230,6 +244,24 @@ export class AmbiClimateAirConditionAccessory {
         if (!err) {
           try {
             this.switchServcie.updateCharacteristic(this.platform.Characteristic.On, true);
+
+            // update fan status
+            this.isFanOn = true;
+            this.fanService.updateCharacteristic(this.platform.Characteristic.On, true);
+            this.updateFanRotationSpeed();
+
+            // update heater cooler if exists
+            if (this.platform.config.heaterCoolerMode) {
+              const heaterCooler = this.platform.devicePair[this.uuid]['heaterCooler'];
+              heaterCooler.service.updateCharacteristic(this.platform.Characteristic.TargetHeaterCoolerState,
+                this.platform.Characteristic.TargetHeaterCoolerState.AUTO);
+              heaterCooler.service.updateCharacteristic(this.platform.Characteristic.CurrentHeaterCoolerState,
+                this.platform.Characteristic.CurrentHeaterCoolerState.IDLE);
+              heaterCooler.service.updateCharacteristic(this.platform.Characteristic.Active,
+                this.platform.Characteristic.Active.ACTIVE);
+              heaterCooler.isOn = true;
+            }
+
           } catch (error) {
             if (data) {
               this.log.error('Set switch status failed.' + JSON.stringify(data));
@@ -245,6 +277,23 @@ export class AmbiClimateAirConditionAccessory {
         if (!err) {
           try {
             this.switchServcie.updateCharacteristic(this.platform.Characteristic.On, false);
+
+            // update fan rstatus
+            this.isFanOn = false;
+            this.fanService.updateCharacteristic(this.platform.Characteristic.On, false);
+            this.fanService.updateCharacteristic(this.platform.Characteristic.RotationSpeed, 0.0);
+            this.rotationSpeed = 0.0;
+
+            // update heater cooler if exists
+            if (this.platform.config.heaterCoolerMode) {
+              const heaterCooler = this.platform.devicePair[this.uuid]['heaterCooler'] as AmbiClimateHeaterCoolerAccessory;
+              heaterCooler.service.updateCharacteristic(this.platform.Characteristic.CurrentHeaterCoolerState,
+                this.platform.Characteristic.CurrentHeaterCoolerState.IDLE);
+              heaterCooler.service.updateCharacteristic(this.platform.Characteristic.Active,
+                this.platform.Characteristic.Active.INACTIVE);
+              heaterCooler.isOn = false;
+            }
+
           } catch (error) {
             if (data) {
               this.log.error('Set switch status failed.' + JSON.stringify(data));

@@ -94,7 +94,9 @@ export class AmbiClimateFeedbackAccessory {
   feedbackServiceTooHotOnSet(value: CharacteristicValue, callback: CharacteristicSetCallback) {
     if (value === true) {
       this.settings.value = 'too_hot';
-      this.client.feedback(this.settings, null);
+      this.client.feedback(this.settings, (err, data) => { 
+        this.switchErrorHandler(err, data);
+      });
       this.resetSwitches();
     }
     callback(null);
@@ -103,7 +105,9 @@ export class AmbiClimateFeedbackAccessory {
   feedbackServiceTooWarmOnSet(value: CharacteristicValue, callback: CharacteristicSetCallback) {
     if (value === true) {
       this.settings.value = 'too_warm';
-      this.client.feedback(this.settings, null);
+      this.client.feedback(this.settings, (err, data) => { 
+        this.switchErrorHandler(err, data);
+      });
       this.resetSwitches();
     }
     callback(null);
@@ -112,7 +116,9 @@ export class AmbiClimateFeedbackAccessory {
   feedbackServiceBitWarmOnSet(value: CharacteristicValue, callback: CharacteristicSetCallback) {
     if (value === true) {
       this.settings.value = 'bit_warm';
-      this.client.feedback(this.settings, null);
+      this.client.feedback(this.settings, (err, data) => { 
+        this.switchErrorHandler(err, data);
+      });
       this.resetSwitches();
     }
     callback(null);
@@ -121,7 +127,9 @@ export class AmbiClimateFeedbackAccessory {
   feedbackServiceComfortableOnSet(value: CharacteristicValue, callback: CharacteristicSetCallback) {
     if (value === true) {
       this.settings.value = 'comfortable';
-      this.client.feedback(this.settings, null);
+      this.client.feedback(this.settings, (err, data) => { 
+        this.switchErrorHandler(err, data);
+      });
       this.resetSwitches();
     }
     callback(null);
@@ -130,7 +138,9 @@ export class AmbiClimateFeedbackAccessory {
   feedbackServiceBitColdOnSet(value: CharacteristicValue, callback: CharacteristicSetCallback) {
     if (value === true) {
       this.settings.value = 'bit_cold';
-      this.client.feedback(this.settings, null);
+      this.client.feedback(this.settings, (err, data) => { 
+        this.switchErrorHandler(err, data);
+      });
       this.resetSwitches();
     }
     callback(null);
@@ -139,7 +149,9 @@ export class AmbiClimateFeedbackAccessory {
   feedbackServiceTooColdOnSet(value: CharacteristicValue, callback: CharacteristicSetCallback) {
     if (value === true) {
       this.settings.value = 'too_cold';
-      this.client.feedback(this.settings, null);
+      this.client.feedback(this.settings, (err, data) => { 
+        this.switchErrorHandler(err, data);
+      });
       this.resetSwitches();
     }
     callback(null);
@@ -148,7 +160,9 @@ export class AmbiClimateFeedbackAccessory {
   feedbackServiceFreezingOnSet(value: CharacteristicValue, callback: CharacteristicSetCallback) {
     if (value === true) {
       this.settings.value = 'freezing';
-      this.client.feedback(this.settings, null);
+      this.client.feedback(this.settings, (err, data) => { 
+        this.switchErrorHandler(err, data);
+      });
       this.resetSwitches();
     }
     callback(null);
@@ -157,6 +171,20 @@ export class AmbiClimateFeedbackAccessory {
   feedbackServiceOnGet(callback: CharacteristicGetCallback) {
     // always false because we can't get current feedback via API
     callback(null, false);
+  }
+
+  switchErrorHandler(err, data) {
+    if (!err) {
+      try {
+        // nothing
+      } catch (error) {
+        if (data) {
+          this.log.error('Set switch status failed.' + JSON.stringify(data));
+        } else {
+          this.log.error('Set switch status failed.' + error);
+        }
+      }
+    }
   }
 
   resetSwitches() {
