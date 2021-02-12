@@ -40,7 +40,7 @@ export class AmbiClimateAirConditionAccessory {
     this.accessory.getService(this.platform.Service.AccessoryInformation)!
       .setCharacteristic(this.platform.Characteristic.Manufacturer, 'Ambi')
       .setCharacteristic(this.platform.Characteristic.Model, 'AmbiClimate')
-      .setCharacteristic(this.platform.Characteristic.SerialNumber, this.accessory.UUID.split('')[4]);
+      .setCharacteristic(this.platform.Characteristic.SerialNumber, this.accessory.UUID.split('-')[4]);
 
     // get services if it exists, otherwise create a new service
     this.temperatureService = this.accessory.getService(this.platform.Service.TemperatureSensor) ||
@@ -51,10 +51,11 @@ export class AmbiClimateAirConditionAccessory {
     this.switchServcie = this.accessory.getService(this.platform.Service.Switch) || this.accessory.addService(this.platform.Service.Switch);
 
     // set the service name, this is what is displayed as the default name on the Home app
-    this.temperatureService.setCharacteristic(this.platform.Characteristic.Name, accessory.context.device.displayName);
-    this.humidityService.setCharacteristic(this.platform.Characteristic.Name, accessory.context.device.displayName);
-    this.fanService.setCharacteristic(this.platform.Characteristic.Name, accessory.context.device.displayName);
-    this.switchServcie.setCharacteristic(this.platform.Characteristic.Name, accessory.context.device.displayName);
+    const displayName = accessory.context.device.locationName + accessory.context.device.roomName;
+    this.temperatureService.setCharacteristic(this.platform.Characteristic.Name, displayName);
+    this.humidityService.setCharacteristic(this.platform.Characteristic.Name, displayName);
+    this.fanService.setCharacteristic(this.platform.Characteristic.Name, displayName);
+    this.switchServcie.setCharacteristic(this.platform.Characteristic.Name, displayName);
 
     this.temperatureService.getCharacteristic(this.platform.Characteristic.CurrentTemperature)
       .on('get', this.temperatureServiceCurrentTemperatureGet.bind(this));

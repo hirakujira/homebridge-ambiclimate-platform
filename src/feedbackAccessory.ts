@@ -32,7 +32,7 @@ export class AmbiClimateFeedbackAccessory {
     this.accessory.getService(this.platform.Service.AccessoryInformation)!
       .setCharacteristic(this.platform.Characteristic.Manufacturer, 'Ambi')
       .setCharacteristic(this.platform.Characteristic.Model, 'AmbiClimate')
-      .setCharacteristic(this.platform.Characteristic.SerialNumber, this.accessory.UUID.split('')[4]);
+      .setCharacteristic(this.platform.Characteristic.SerialNumber, this.accessory.UUID.split('-')[4]);
 
     if (this.platform.config.showFeedbacks) {
 

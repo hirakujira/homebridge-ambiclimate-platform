@@ -42,14 +42,15 @@ export class AmbiClimateHeaterCoolerAccessory {
     this.accessory.getService(this.platform.Service.AccessoryInformation)!
       .setCharacteristic(this.platform.Characteristic.Manufacturer, 'Ambi')
       .setCharacteristic(this.platform.Characteristic.Model, 'AmbiClimate')
-      .setCharacteristic(this.platform.Characteristic.SerialNumber, this.accessory.UUID.split('')[4]);
+      .setCharacteristic(this.platform.Characteristic.SerialNumber, this.accessory.UUID.split('-')[4]);
 
     // get services if it exists, otherwise create a new service
     this.service = this.accessory.getService(this.platform.Service.HeaterCooler) ||
       this.accessory.addService(this.platform.Service.HeaterCooler);
 
     // set the service name, this is what is displayed as the default name on the Home app
-    this.service.setCharacteristic(this.platform.Characteristic.Name, accessory.context.device.displayName);
+    const displayName = accessory.context.device.locationName + accessory.context.device.roomName;
+    this.service.setCharacteristic(this.platform.Characteristic.Name, displayName);
 
     this.service.getCharacteristic(this.platform.Characteristic.Active)
       .on('get', this.serviceActiveGet.bind(this))

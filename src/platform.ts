@@ -102,7 +102,7 @@ export class AmbiClimatePlatform implements DynamicPlatformPlugin {
       const uuid = this.api.hap.uuid.generate(device.locationName + device.roomName);
       const feedbackUuid = this.api.hap.uuid.generate(device.locationName + device.roomName + 'feedback');
       const heaterCoolerUuid = this.api.hap.uuid.generate(device.locationName + device.roomName + 'heatercooler');
-
+      this.log.debug(uuid);
       // see if an accessory with the same uuid has already been registered and restored from
       // the cached devices we stored in the `configureAccessory` method above
       const existingAccessory = this.accessories.find(accessory => accessory.UUID === uuid);
