@@ -79,6 +79,10 @@ export class AmbiClimateAirConditionAccessory {
     } else {
       this.platform.devicePair[this.uuid]['switch'] = this;
     }
+
+    setInterval(() => {
+      this.client = this.platform.client;
+    }, 1000 * 60 * 60);
   }
 
   temperatureServiceCurrentTemperatureGet(callback: CharacteristicGetCallback) {

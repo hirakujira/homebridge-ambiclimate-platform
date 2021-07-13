@@ -79,7 +79,10 @@ export class AmbiClimateHeaterCoolerAccessory {
     } else {
       this.platform.devicePair[this.uuid]['heaterCooler'] = this;
     }
-
+    
+    setInterval(() => {
+      this.client = this.platform.client;
+    }, 1000 * 60 * 60);
   }
 
   serviceCurrentTemperatureGet(callback: CharacteristicGetCallback) {

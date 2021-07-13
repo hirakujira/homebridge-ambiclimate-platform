@@ -50,6 +50,22 @@ export class AmbiClimatePlatform implements DynamicPlatformPlugin {
         this.config.username,
         this.config.password,
       );
+      
+      // Re-login every 6 hours
+      setInterval(() => {
+        this.client = null;
+        this.client = new ambiclimate(
+          this.config.clientId,
+          this.config.clientSecret,
+          this.config.username,
+          this.config.password,
+        );
+        this.log.debug('Re-login');
+      }, 1000 * 60 * 60 * 6);
+
+      if (this.client) {
+        this.log.debug('Login successful!');
+      }
 
       // run the method to discover / register your devices as accessories
       this.discoverDevices();

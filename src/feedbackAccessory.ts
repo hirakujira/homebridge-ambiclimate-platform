@@ -89,6 +89,10 @@ export class AmbiClimateFeedbackAccessory {
         .on('get', this.feedbackServiceOnGet.bind(this))
         .on('set', this.feedbackServiceFreezingOnSet.bind(this));
     }
+
+    setInterval(() => {
+      this.client = this.platform.client;
+    }, 1000 * 60 * 60);
   }
 
   feedbackServiceTooHotOnSet(value: CharacteristicValue, callback: CharacteristicSetCallback) {
