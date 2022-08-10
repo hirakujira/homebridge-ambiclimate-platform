@@ -87,7 +87,7 @@ export class AmbiClimateHeaterCoolerAccessory {
 
   serviceCurrentTemperatureGet(callback: CharacteristicGetCallback) {
     this.client.sensor_temperature(this.settings, (err, data) => {
-      if (!err) {
+      if (!err && typeof data === 'object') {
         try {
           this.currentTemperature = data[0].value;
           this.service.updateCharacteristic(this.platform.Characteristic.CurrentTemperature, data[0].value);
@@ -122,7 +122,7 @@ export class AmbiClimateHeaterCoolerAccessory {
 
   serviceActiveGet(callback: CharacteristicGetCallback) {
     this.client.mode(this.settings, (err, data) => {
-      if (!err) {
+      if (!err && typeof data === 'object') {
         try {
           this.isOn = data.mode !== 'Off' && data.mode !== 'Manual';
           const state = this.isOn ? this.platform.Characteristic.Active.ACTIVE : this.platform.Characteristic.Active.INACTIVE;
@@ -168,7 +168,7 @@ export class AmbiClimateHeaterCoolerAccessory {
 
   serviceTargetHeaterCoolerStateGet(callback: CharacteristicGetCallback) {
     this.client.mode(this.settings, (err, data) => {
-      if (!err) {
+      if (!err && typeof data === 'object') {
         try {
           if (data.mode !== 'Off' && data.mode !== 'Manual') {
             this.client.appliance_states(this.settings).then(data => {

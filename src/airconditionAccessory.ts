@@ -87,7 +87,7 @@ export class AmbiClimateAirConditionAccessory {
 
   temperatureServiceCurrentTemperatureGet(callback: CharacteristicGetCallback) {
     this.client.sensor_temperature(this.settings, (err, data) => {
-      if (!err) {
+      if (!err && typeof data === 'object') {
         try {
           this.currentTemperature = data[0].value;
           this.temperatureService.updateCharacteristic(this.platform.Characteristic.CurrentTemperature, data[0].value);
@@ -105,7 +105,7 @@ export class AmbiClimateAirConditionAccessory {
 
   humidityServiceCurrentRelativeHumidityGet(callback: CharacteristicGetCallback) {
     this.client.sensor_humidity(this.settings, (err, data) => {
-      if (!err) {
+      if (!err && typeof data === 'object') {
         try {
           this.currentRelativeHumidity = data[0].value;
           this.humidityService.updateCharacteristic(this.platform.Characteristic.CurrentRelativeHumidity, data[0].value);
@@ -124,7 +124,7 @@ export class AmbiClimateAirConditionAccessory {
 
   fanServiceOnGet(callback: CharacteristicGetCallback) {
     this.client.mode(this.settings, (err, data) => {
-      if (!err) {
+      if (!err && typeof data === 'object') {
         try {
           switch (data.mode) {
             case 'Off':
@@ -167,7 +167,7 @@ export class AmbiClimateAirConditionAccessory {
 
   updateFanRotationSpeed() {
     this.client.mode(this.settings, (err, data) => {
-      if (!err) {
+      if (!err && typeof data === 'object') {
         try {
           switch (data.mode) {
             case 'Off':
@@ -225,7 +225,7 @@ export class AmbiClimateAirConditionAccessory {
 
   switchServiceOnGet(callback: CharacteristicGetCallback) {
     this.client.mode(this.settings, (err, data) => {
-      if (!err) {
+      if (!err && typeof data === 'object') {
         try {
           this.switchServcie.updateCharacteristic(this.platform.Characteristic.On, data.mode !== 'Off' && data.mode !== 'Manual');
         } catch (error) {
@@ -246,7 +246,7 @@ export class AmbiClimateAirConditionAccessory {
     if (value === true) {
       this.log.debug('Putting into comfort mode');
       this.client.comfort(this.settings, (err, data) => {
-        if (!err) {
+        if (!err && typeof data === 'object') {
           try {
             this.switchServcie.updateCharacteristic(this.platform.Characteristic.On, true);
 
@@ -279,7 +279,7 @@ export class AmbiClimateAirConditionAccessory {
     } else {
       this.log.debug('Turning off');
       this.client.off(this.settings, (err, data) => {
-        if (!err) {
+        if (!err && typeof data === 'object') {
           try {
             this.switchServcie.updateCharacteristic(this.platform.Characteristic.On, false);
 
@@ -298,7 +298,6 @@ export class AmbiClimateAirConditionAccessory {
                 this.platform.Characteristic.Active.INACTIVE);
               heaterCooler.isOn = false;
             }
-
           } catch (error) {
             if (data) {
               this.log.error('Set switch status failed.' + JSON.stringify(data));

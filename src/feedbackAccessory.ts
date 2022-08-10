@@ -178,7 +178,7 @@ export class AmbiClimateFeedbackAccessory {
   }
 
   switchErrorHandler(err, data) {
-    if (!err) {
+    if (!err && typeof data === 'object') {
       try {
         // nothing
       } catch (error) {
