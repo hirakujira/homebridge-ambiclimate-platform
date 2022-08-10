@@ -98,6 +98,12 @@ export class AmbiClimateAirConditionAccessory {
             this.log.error('Get current tempature failed.' + error);
           }
         }
+      } else {
+        if (typeof data === 'string' && data.includes('Just a moment...')) {
+          this.log.warn('Get current temperature API is busy, please try again later.');
+        } else {
+          this.log.error('Get current temperature failed.' + err);
+        }
       }
     });
     callback(null, this.currentTemperature);
@@ -115,6 +121,12 @@ export class AmbiClimateAirConditionAccessory {
           } else {
             this.log.error('Get current relative humidity failed.' + error);
           }
+        }
+      } else {
+        if (typeof data === 'string' && data.includes('Just a moment...')) {
+          this.log.warn('Get current humidity API is busy, please try again later.');
+        } else {
+          this.log.error('Get current humidity failed.' + err);
         }
       }
     });
@@ -143,6 +155,12 @@ export class AmbiClimateAirConditionAccessory {
           } else {
             this.log.error('Get current fan status failed.' + error);
           }
+        }
+      } else {
+        if (typeof data === 'string' && data.includes('Just a moment...')) {
+          this.log.warn('Get fan status API is busy, please try again later.');
+        } else {
+          this.log.error('Get fan status failed.' + err);
         }
       }
     });
@@ -210,6 +228,12 @@ export class AmbiClimateAirConditionAccessory {
             this.log.error('Get current rotation speed failed.' + error);
           }
         }
+      } else {
+        if (typeof data === 'string' && data.includes('Just a moment...')) {
+          this.log.warn('Get fan rotation API is busy, please try again later.');
+        } else {
+          this.log.error('Get fan rotation status failed.' + err);
+        }
       }
     });
   }
@@ -234,6 +258,12 @@ export class AmbiClimateAirConditionAccessory {
           } else {
             this.log.error('Get switch status failed.' + error);
           }
+        }
+      } else {
+        if (typeof data === 'string' && data.includes('Just a moment...')) {
+          this.log.warn('Get switch status API is busy, please try again later.');
+        } else {
+          this.log.error('Get switch status failed.' + err);
         }
       }
     });
@@ -274,6 +304,12 @@ export class AmbiClimateAirConditionAccessory {
               this.log.error('Set switch status failed.' + error);
             }
           }
+        } else {
+          if (typeof data === 'string' && data.includes('Just a moment...')) {
+            this.log.warn('Set switch status API is busy, please try again later.');
+          } else {
+            this.log.error('Set switch status failed.' + err);
+          }
         }
       });
     } else {
@@ -304,6 +340,12 @@ export class AmbiClimateAirConditionAccessory {
             } else {
               this.log.error('Set switch status failed.' + error);
             }
+          }
+        } else {
+          if (typeof data === 'string' && data.includes('Just a moment...')) {
+            this.log.warn('Set switch status API is busy, please try again later.');
+          } else {
+            this.log.error('Set switch status failed.' + err);
           }
         }
       });

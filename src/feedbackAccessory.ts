@@ -188,6 +188,12 @@ export class AmbiClimateFeedbackAccessory {
           this.log.error('Set switch status failed.' + error);
         }
       }
+    } else {
+      if (typeof data === 'string' && data.includes('Just a moment...')) {
+        this.log.warn('Set feedback switch API is busy, please try again later.');
+      } else {
+        this.log.error('Set feedback switch status failed.' + err);
+      }
     }
   }
 

@@ -98,6 +98,12 @@ export class AmbiClimateHeaterCoolerAccessory {
             this.log.error('Get ac current temperature failed.' + error);
           }
         }
+      } else {
+        if (typeof data === 'string' && data.includes('Just a moment...')) {
+          this.log.warn('Get ac current temperature API is busy, please try again later.');
+        } else {
+          this.log.error('Get ac current temperature failed.' + err);
+        }
       }
     });
     callback(null, this.currentTemperature);
@@ -133,6 +139,12 @@ export class AmbiClimateHeaterCoolerAccessory {
           } else {
             this.log.error('Get ac current active failed.' + error);
           }
+        }
+      } else {
+        if (typeof data === 'string' && data.includes('Just a moment...')) {
+          this.log.warn('Get ac current active status API is busy, please try again later.');
+        } else {
+          this.log.error('Get ac current active status failed.' + err);
         }
       }
     });
@@ -197,8 +209,13 @@ export class AmbiClimateHeaterCoolerAccessory {
             this.log.error('Get ac target status failed.' + error);
           }
         }
+      } else {
+        if (typeof data === 'string' && data.includes('Just a moment...')) {
+          this.log.warn('Get target heater cooler status API is busy, please try again later.');
+        } else {
+          this.log.error('Get target heater cooler status failed.' + err);
+        }
       }
-
     });
 
     callback(null, this.targetHeaterCoolerState);
