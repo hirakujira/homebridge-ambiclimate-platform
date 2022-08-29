@@ -236,7 +236,7 @@ export class AmbiClimateHeaterCoolerAccessory {
       this.settings.value = value as number;
       this.client.temperature(this.settings, (err, data) => {
         if (err) {
-          this.log.error('Get ac heating threshold failed.' + err + JSON.stringify(data));
+          this.log.error('Set ac heating threshold failed.' + err + JSON.stringify(data));
         }
       });
     }
@@ -256,7 +256,7 @@ export class AmbiClimateHeaterCoolerAccessory {
       this.settings.value = value as number;
       this.client.temperature(this.settings, (err, data) => {
         if (err) {
-          this.log.error('Get ac heating threshold failed.' + err + JSON.stringify(data));
+          this.log.error('Set ac heating threshold failed.' + err + JSON.stringify(data));
         }
       });
     }
