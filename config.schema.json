@@ -39,6 +39,12 @@
         "default": false,
         "description": "Show device as heater cooler (air condition). Please read README.md to get more infomation."
       },
+      "experimental": {
+        "title": "Experimental Mode",
+        "type": "boolean",
+        "default": false,
+        "description": "Enable experimental APIs. This can get rid off the API rate limit but may be unstable."
+      },
       "accessories": {
         "type": "array",
         "items": {
