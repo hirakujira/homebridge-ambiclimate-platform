@@ -6,14 +6,14 @@
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
-    "url": "git://github.com/hirakujira/homebridge-ambiclimate-platform"
+    "url": "git://github.com/hirakujira/homebridge-ambiclimate-platform.git"
   },
   "bugs": {
-    "url": "https://github.com/hirakujira/homebridge-ambiclimate-platform"
+    "url": "https://github.com/hirakujira/homebridge-ambiclimate-platform/issues"
   },
   "engines": {
-    "node": ">=10.17.0",
-    "homebridge": ">=1.0.0"
+    "node": ">=14.18.1",
+    "homebridge": ">=1.5.0"
   },
   "main": "dist/index.js",
   "scripts": {
@@ -32,14 +32,14 @@
     "node-ambiclimate": "^2.3.0"
   },
   "devDependencies": {
-    "@types/node": "^14.14.6",
-    "@typescript-eslint/eslint-plugin": "^4.6.1",
-    "@typescript-eslint/parser": "^4.6.1",
-    "eslint": "^7.13.0",
+    "@types/node": "^16.10.9",
+    "@typescript-eslint/eslint-plugin": "^5.0.0",
+    "@typescript-eslint/parser": "^5.0.0",
+    "eslint": "^8.0.1",
     "homebridge": "^1.5.0",
-    "nodemon": "^2.0.6",
+    "nodemon": "^2.0.13",
     "rimraf": "^3.0.2",
-    "ts-node": "^9.0.0",
-    "typescript": "^4.0.5"
+    "ts-node": "^10.3.0",
+    "typescript": "^4.4.4"
   }
 }
