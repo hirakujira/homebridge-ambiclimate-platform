@@ -20,6 +20,7 @@ export class AmbiClimateHeaterCoolerAccessory {
   private heatingThresholdTempature = 15;
   private coolingThresholdTempature = 25;
   private storagePath = this.platform.storagePath;
+  private experimental = false;
   private uuid = '';
   private settings = {
     room_name: '',
@@ -34,6 +35,7 @@ export class AmbiClimateHeaterCoolerAccessory {
 
     this.log = this.platform.log;
     this.client = this.platform.client;
+    this.experimental = this.platform.experimental;
 
     this.settings.room_name = this.accessory.context.device.roomName;
     this.settings.location_name = this.accessory.context.device.locationName;
@@ -49,7 +51,7 @@ export class AmbiClimateHeaterCoolerAccessory {
       this.accessory.addService(this.platform.Service.HeaterCooler);
 
     // set the service name, this is what is displayed as the default name on the Home app
-    const displayName = accessory.context.device.locationName + accessory.context.device.roomName;
+    const displayName = `${accessory.context.device.locationName} ${accessory.context.device.roomName}`;
     this.service.setCharacteristic(this.platform.Characteristic.Name, displayName);
 
     this.service.getCharacteristic(this.platform.Characteristic.Active)
@@ -86,26 +88,29 @@ export class AmbiClimateHeaterCoolerAccessory {
   }
 
   serviceCurrentTemperatureGet(callback: CharacteristicGetCallback) {
-    this.client.sensor_temperature(this.settings, (err, data) => {
-      if (!err && typeof data === 'object') {
-        try {
-          this.currentTemperature = data[0].value;
-          this.service.updateCharacteristic(this.platform.Characteristic.CurrentTemperature, data[0].value);
-        } catch (error) {
-          if (data) {
-            this.log.error('Get ac current temperature failed.' + JSON.stringify(data));
+    if (!this.experimental) {
+      this.client.sensor_temperature(this.settings, (err, data) => {
+        if (!err && typeof data === 'object') {
+          try {
+            this.currentTemperature = data[0].value;
+            this.service.updateCharacteristic(this.platform.Characteristic.CurrentTemperature, data[0].value);
+          } catch (error) {
+            if (data) {
+              this.log.error('Get ac current temperature failed.' + JSON.stringify(data));
+            } else {
+              this.log.error('Get ac current temperature failed.' + error);
+            }
+          }
+        } else {
+          if (typeof data === 'string' && data.includes('Just a moment...')) {
+            this.log.warn('Get ac current temperature API is busy, please try again later.');
           } else {
-            this.log.error('Get ac current temperature failed.' + error);
+            this.log.error('Get ac current temperature failed.' + err);
           }
         }
-      } else {
-        if (typeof data === 'string' && data.includes('Just a moment...')) {
-          this.log.warn('Get ac current temperature API is busy, please try again later.');
-        } else {
-          this.log.error('Get ac current temperature failed.' + err);
-        }
-      }
-    });
+      });
+    }
+
     callback(null, this.currentTemperature);
   }
 
@@ -127,27 +132,29 @@ export class AmbiClimateHeaterCoolerAccessory {
   }
 
   serviceActiveGet(callback: CharacteristicGetCallback) {
-    this.client.mode(this.settings, (err, data) => {
-      if (!err && typeof data === 'object') {
-        try {
-          this.isOn = data.mode !== 'Off' && data.mode !== 'Manual';
-          const state = this.isOn ? this.platform.Characteristic.Active.ACTIVE : this.platform.Characteristic.Active.INACTIVE;
-          this.service.updateCharacteristic(this.platform.Characteristic.Active, state);
-        } catch (error) {
-          if (data) {
-            this.log.error('Get ac current active failed.' + JSON.stringify(data));
+    if (!this.experimental) {
+      this.client.mode(this.settings, (err, data) => {
+        if (!err && typeof data === 'object') {
+          try {
+            this.isOn = data.mode !== 'Off' && data.mode !== 'Manual';
+            const state = this.isOn ? this.platform.Characteristic.Active.ACTIVE : this.platform.Characteristic.Active.INACTIVE;
+            this.service.updateCharacteristic(this.platform.Characteristic.Active, state);
+          } catch (error) {
+            if (data) {
+              this.log.error('Get ac current active failed.' + JSON.stringify(data));
+            } else {
+              this.log.error('Get ac current active failed.' + error);
+            }
+          }
+        } else {
+          if (typeof data === 'string' && data.includes('Just a moment...')) {
+            this.log.warn('Get ac current active status API is busy, please try again later.');
           } else {
-            this.log.error('Get ac current active failed.' + error);
+            this.log.error('Get ac current active status failed.' + err);
           }
         }
-      } else {
-        if (typeof data === 'string' && data.includes('Just a moment...')) {
-          this.log.warn('Get ac current active status API is busy, please try again later.');
-        } else {
-          this.log.error('Get ac current active status failed.' + err);
-        }
-      }
-    });
+      });
+    }
 
     callback(null, this.isOn);
   }
@@ -158,7 +165,10 @@ export class AmbiClimateHeaterCoolerAccessory {
 
     if (value === this.platform.Characteristic.Active.ACTIVE) {
       this.settings.value = this.currentTemperature;
-      this.client.temperature(this.settings, null);
+      
+      if (!this.experimental) {
+        this.client.temperature(this.settings, null);
+      }
       
       // update basic switch 
       acswitch.switchServcie.updateCharacteristic(this.platform.Characteristic.On, true);
@@ -179,44 +189,46 @@ export class AmbiClimateHeaterCoolerAccessory {
   }
 
   serviceTargetHeaterCoolerStateGet(callback: CharacteristicGetCallback) {
-    this.client.mode(this.settings, (err, data) => {
-      if (!err && typeof data === 'object') {
-        try {
-          if (data.mode !== 'Off' && data.mode !== 'Manual') {
-            this.client.appliance_states(this.settings).then(data => {
-              switch (data.data[0].mode) {
-                case 'Heat':
-                  this.targetHeaterCoolerState = this.platform.Characteristic.TargetHeaterCoolerState.HEAT;
-                  this.currentHeaterCoolerState = this.platform.Characteristic.CurrentHeaterCoolerState.HEATING;
-                  break;
-                case 'Cool':
-                  this.targetHeaterCoolerState = this.platform.Characteristic.TargetHeaterCoolerState.COOL;
-                  this.currentHeaterCoolerState = this.platform.Characteristic.CurrentHeaterCoolerState.COOLING;
-                  break;
-                default:
-                  this.targetHeaterCoolerState = this.platform.Characteristic.TargetHeaterCoolerState.AUTO;
-                  this.currentHeaterCoolerState = this.platform.Characteristic.CurrentHeaterCoolerState.IDLE;
-                  break;
-              }
-
-              this.service.updateCharacteristic(this.platform.Characteristic.TargetHeaterCoolerState, this.targetHeaterCoolerState);
-            });
+    if (!this.experimental) {
+      this.client.mode(this.settings, (err, data) => {
+        if (!err && typeof data === 'object') {
+          try {
+            if (data.mode !== 'Off' && data.mode !== 'Manual') {
+              this.client.appliance_states(this.settings).then(data => {
+                switch (data.data[0].mode) {
+                  case 'Heat':
+                    this.targetHeaterCoolerState = this.platform.Characteristic.TargetHeaterCoolerState.HEAT;
+                    this.currentHeaterCoolerState = this.platform.Characteristic.CurrentHeaterCoolerState.HEATING;
+                    break;
+                  case 'Cool':
+                    this.targetHeaterCoolerState = this.platform.Characteristic.TargetHeaterCoolerState.COOL;
+                    this.currentHeaterCoolerState = this.platform.Characteristic.CurrentHeaterCoolerState.COOLING;
+                    break;
+                  default:
+                    this.targetHeaterCoolerState = this.platform.Characteristic.TargetHeaterCoolerState.AUTO;
+                    this.currentHeaterCoolerState = this.platform.Characteristic.CurrentHeaterCoolerState.IDLE;
+                    break;
+                }
+  
+                this.service.updateCharacteristic(this.platform.Characteristic.TargetHeaterCoolerState, this.targetHeaterCoolerState);
+              });
+            }
+          } catch (error) {
+            if (data) {
+              this.log.error('Get ac target status failed.' + JSON.stringify(data));
+            } else {
+              this.log.error('Get ac target status failed.' + error);
+            }
           }
-        } catch (error) {
-          if (data) {
-            this.log.error('Get ac target status failed.' + JSON.stringify(data));
-          } else {
-            this.log.error('Get ac target status failed.' + error);
-          }
-        }
-      } else {
-        if (typeof data === 'string' && data.includes('Just a moment...')) {
-          this.log.warn('Get target heater cooler status API is busy, please try again later.');
         } else {
-          this.log.error('Get target heater cooler status failed.' + err);
+          if (typeof data === 'string' && data.includes('Just a moment...')) {
+            this.log.warn('Get target heater cooler status API is busy, please try again later.');
+          } else {
+            this.log.error('Get target heater cooler status failed.' + err);
+          }
         }
-      }
-    });
+      });
+    }
 
     callback(null, this.targetHeaterCoolerState);
   }
@@ -234,11 +246,14 @@ export class AmbiClimateHeaterCoolerAccessory {
   serviceHeatingThresholdTemperatureSet(value: CharacteristicValue, callback: CharacteristicSetCallback) {
     if (this.currentTemperature < value) {
       this.settings.value = value as number;
-      this.client.temperature(this.settings, (err, data) => {
-        if (err) {
-          this.log.error('Set ac heating threshold failed.' + err + JSON.stringify(data));
-        }
-      });
+      
+      if (!this.experimental) {
+        this.client.temperature(this.settings, (err, data) => {
+          if (err) {
+            this.log.error('Set ac heating threshold failed.' + err + JSON.stringify(data));
+          }
+        });
+      }
     }
 
     this.heatingThresholdTempature = value as number;
@@ -254,11 +269,14 @@ export class AmbiClimateHeaterCoolerAccessory {
   serviceCoolingThresholdTemperatureSet(value: CharacteristicValue, callback: CharacteristicSetCallback) {
     if (this.currentTemperature > value) {
       this.settings.value = value as number;
-      this.client.temperature(this.settings, (err, data) => {
-        if (err) {
-          this.log.error('Set ac heating threshold failed.' + err + JSON.stringify(data));
-        }
-      });
+      
+      if (!this.experimental) {
+        this.client.temperature(this.settings, (err, data) => {
+          if (err) {
+            this.log.error('Set ac heating threshold failed.' + err + JSON.stringify(data));
+          }
+        });
+      }
     }
 
     this.coolingThresholdTempature = value as number;

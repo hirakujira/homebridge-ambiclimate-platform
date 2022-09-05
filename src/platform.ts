@@ -25,6 +25,7 @@ export class AmbiClimatePlatform implements DynamicPlatformPlugin {
   public client;
   public storagePath = '';
   public devicePair = {};
+  public experimental = false;
 
   constructor(
     public readonly log: Logger,
@@ -44,27 +45,11 @@ export class AmbiClimatePlatform implements DynamicPlatformPlugin {
         return;
       }
 
-      this.client = new ambiclimate(
-        this.config.clientId,
-        this.config.clientSecret,
-        this.config.username,
-        this.config.password,
-      );
-      
-      // Re-login every 6 hours
-      setInterval(() => {
-        this.client = null;
-        this.client = new ambiclimate(
-          this.config.clientId,
-          this.config.clientSecret,
-          this.config.username,
-          this.config.password,
-        );
-        this.log.debug('Re-login');
-      }, 1000 * 60 * 60 * 6);
-
-      if (this.client) {
-        this.log.debug('Login successful!');
+      if (this.config.experimental) {
+        this.log.info('Experimental mode enabled');
+        this.experimental = true;
+      } else {
+        this.startClient();
       }
 
       // run the method to discover / register your devices as accessories
@@ -85,6 +70,31 @@ export class AmbiClimatePlatform implements DynamicPlatformPlugin {
 
   checkConfigValid() {
     return this.config.clientId && this.config.clientSecret && this.config.username && this.config.password;
+  }
+
+  startClient() {
+    this.client = new ambiclimate(
+      this.config.clientId,
+      this.config.clientSecret,
+      this.config.username,
+      this.config.password,
+    );
+    
+    // Re-login every 6 hours
+    setInterval(() => {
+      this.client = null;
+      this.client = new ambiclimate(
+        this.config.clientId,
+        this.config.clientSecret,
+        this.config.username,
+        this.config.password,
+      );
+      this.log.debug('Re-login');
+    }, 1000 * 60 * 60 * 6);
+
+    if (this.client) {
+      this.log.debug('Login successful!');
+    }
   }
 
   discoverDevices() {

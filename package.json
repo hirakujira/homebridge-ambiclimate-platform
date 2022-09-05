@@ -29,6 +29,7 @@
     "ambi"
   ],
   "dependencies": {
+    "axios": "^0.27.2",
     "node-ambiclimate": "^2.3.0"
   },
   "devDependencies": {

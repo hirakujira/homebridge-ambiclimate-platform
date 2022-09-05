@@ -11,6 +11,7 @@ export class AmbiClimateFeedbackAccessory {
   private feedbackServices: Array<Service> = [];
   private log: Logger;
   private client;
+  private experimental = false;
   private settings = {
     room_name: '',
     location_name: '',
@@ -24,6 +25,7 @@ export class AmbiClimateFeedbackAccessory {
 
     this.log = this.platform.log;
     this.client = this.platform.client;
+    this.experimental = this.platform.experimental;
 
     this.settings.room_name = this.accessory.context.device.roomName;
     this.settings.location_name = this.accessory.context.device.locationName;
@@ -98,9 +100,11 @@ export class AmbiClimateFeedbackAccessory {
   feedbackServiceTooHotOnSet(value: CharacteristicValue, callback: CharacteristicSetCallback) {
     if (value === true) {
       this.settings.value = 'too_hot';
-      this.client.feedback(this.settings, (err, data) => { 
-        this.switchErrorHandler(err, data);
-      });
+      if (!this.experimental) { 
+        this.client.feedback(this.settings, (err, data) => { 
+          this.switchErrorHandler(err, data);
+        });
+      }
       this.resetSwitches();
     }
     callback(null);
@@ -109,9 +113,11 @@ export class AmbiClimateFeedbackAccessory {
   feedbackServiceTooWarmOnSet(value: CharacteristicValue, callback: CharacteristicSetCallback) {
     if (value === true) {
       this.settings.value = 'too_warm';
-      this.client.feedback(this.settings, (err, data) => { 
-        this.switchErrorHandler(err, data);
-      });
+      if (!this.experimental) { 
+        this.client.feedback(this.settings, (err, data) => { 
+          this.switchErrorHandler(err, data);
+        });
+      }
       this.resetSwitches();
     }
     callback(null);
@@ -120,9 +126,11 @@ export class AmbiClimateFeedbackAccessory {
   feedbackServiceBitWarmOnSet(value: CharacteristicValue, callback: CharacteristicSetCallback) {
     if (value === true) {
       this.settings.value = 'bit_warm';
-      this.client.feedback(this.settings, (err, data) => { 
-        this.switchErrorHandler(err, data);
-      });
+      if (!this.experimental) { 
+        this.client.feedback(this.settings, (err, data) => { 
+          this.switchErrorHandler(err, data);
+        });
+      }
       this.resetSwitches();
     }
     callback(null);
@@ -131,9 +139,11 @@ export class AmbiClimateFeedbackAccessory {
   feedbackServiceComfortableOnSet(value: CharacteristicValue, callback: CharacteristicSetCallback) {
     if (value === true) {
       this.settings.value = 'comfortable';
-      this.client.feedback(this.settings, (err, data) => { 
-        this.switchErrorHandler(err, data);
-      });
+      if (!this.experimental) { 
+        this.client.feedback(this.settings, (err, data) => { 
+          this.switchErrorHandler(err, data);
+        });
+      }
       this.resetSwitches();
     }
     callback(null);
@@ -142,9 +152,11 @@ export class AmbiClimateFeedbackAccessory {
   feedbackServiceBitColdOnSet(value: CharacteristicValue, callback: CharacteristicSetCallback) {
     if (value === true) {
       this.settings.value = 'bit_cold';
-      this.client.feedback(this.settings, (err, data) => { 
-        this.switchErrorHandler(err, data);
-      });
+      if (!this.experimental) { 
+        this.client.feedback(this.settings, (err, data) => { 
+          this.switchErrorHandler(err, data);
+        });
+      }
       this.resetSwitches();
     }
     callback(null);
@@ -153,9 +165,11 @@ export class AmbiClimateFeedbackAccessory {
   feedbackServiceTooColdOnSet(value: CharacteristicValue, callback: CharacteristicSetCallback) {
     if (value === true) {
       this.settings.value = 'too_cold';
-      this.client.feedback(this.settings, (err, data) => { 
-        this.switchErrorHandler(err, data);
-      });
+      if (!this.experimental) { 
+        this.client.feedback(this.settings, (err, data) => { 
+          this.switchErrorHandler(err, data);
+        });
+      }
       this.resetSwitches();
     }
     callback(null);
@@ -164,9 +178,11 @@ export class AmbiClimateFeedbackAccessory {
   feedbackServiceFreezingOnSet(value: CharacteristicValue, callback: CharacteristicSetCallback) {
     if (value === true) {
       this.settings.value = 'freezing';
-      this.client.feedback(this.settings, (err, data) => { 
-        this.switchErrorHandler(err, data);
-      });
+      if (!this.experimental) { 
+        this.client.feedback(this.settings, (err, data) => { 
+          this.switchErrorHandler(err, data);
+        });
+      }
       this.resetSwitches();
     }
     callback(null);
