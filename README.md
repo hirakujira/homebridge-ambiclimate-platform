@@ -54,7 +54,7 @@ Simple config example:
 | username | **YES** | Your Ambi Climate account username | 
 | password | **YES** | Your Ambi Climate account password | 
 | showFeedbacks | | Show feedback options as switches. (Too Hot, Too Warm, Bit Warm, Comfortable, Bit Cold, Too Cold and Freezing) | false | true/false
-| heaterCoolerMode | | Add device as heater cooler (air condition). <br>Notice: This would set Ambi Climate to temperature mode instead of comfort mode. Also, due to limitations of Ambi Climate APIs (which doesn't allow set to heat/cool mode manually), the status it shows may be different from your settings. | false | true/false
+| heaterCoolerMode | | Add device as heater cooler (air conditioner). <br>Notice: This would set Ambi Climate to temperature mode instead of comfort mode. Also, due to limitations of Ambi Climate APIs (which doesn't allow set to heat/cool mode manually), the status it shows may be different from your settings. | false | true/false
 | experimental | | Enable experimental APIs. This can get rid off the API rate limit but may be unstable. | false | true/false
 | accessories.roomName | **YES** | Device room name, must match the name within the Ambi Climate App |
 | accessories.locationName | **YES** | Device location name, must match the name within the Ambi Climate App |
