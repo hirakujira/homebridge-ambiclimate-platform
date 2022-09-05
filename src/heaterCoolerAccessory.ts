@@ -1,7 +1,7 @@
 import { Service, Logger, PlatformAccessory, CharacteristicValue, CharacteristicSetCallback, CharacteristicGetCallback } from 'homebridge';
 
 import { AmbiClimatePlatform } from './platform';
-import { AmbiClimateAirConditionAccessory } from './airconditionAccessory';
+import { AmbiClimateAirConditionerAccessory } from './airConditionerAccessory';
 import fs from 'fs';
 
 /**
@@ -13,14 +13,16 @@ export class AmbiClimateHeaterCoolerAccessory {
   public service: Service;
   private log: Logger;
   private client;
+
   private currentTemperature = 0.0;
   public isOn = false;
   private targetHeaterCoolerState = this.platform.Characteristic.TargetHeaterCoolerState.AUTO;
   private currentHeaterCoolerState = this.platform.Characteristic.CurrentHeaterCoolerState.INACTIVE;
-  private heatingThresholdTempature = 15;
+  private heatingThresholdTempature = 18;
   private coolingThresholdTempature = 25;
   private storagePath = this.platform.storagePath;
   private experimental = false;
+  private displayName = '';
   private uuid = '';
   private settings = {
     room_name: '',
@@ -51,8 +53,8 @@ export class AmbiClimateHeaterCoolerAccessory {
       this.accessory.addService(this.platform.Service.HeaterCooler);
 
     // set the service name, this is what is displayed as the default name on the Home app
-    const displayName = `${accessory.context.device.locationName} ${accessory.context.device.roomName}`;
-    this.service.setCharacteristic(this.platform.Characteristic.Name, displayName);
+    this.displayName = `${accessory.context.device.locationName} ${accessory.context.device.roomName}`;
+    this.service.setCharacteristic(this.platform.Characteristic.Name, this.displayName);
 
     this.service.getCharacteristic(this.platform.Characteristic.Active)
       .on('get', this.serviceActiveGet.bind(this))
@@ -81,7 +83,7 @@ export class AmbiClimateHeaterCoolerAccessory {
     } else {
       this.platform.devicePair[this.uuid]['heaterCooler'] = this;
     }
-    
+
     setInterval(() => {
       this.client = this.platform.client;
     }, 1000 * 60 * 60);
@@ -109,6 +111,10 @@ export class AmbiClimateHeaterCoolerAccessory {
           }
         }
       });
+    } else {
+      const deviceInfo = this.client.getDeviceInfo(this.displayName);
+      this.currentTemperature = deviceInfo.temperature;
+      this.service.updateCharacteristic(this.platform.Characteristic.CurrentTemperature, deviceInfo.temperature);
     }
 
     callback(null, this.currentTemperature);
@@ -128,6 +134,7 @@ export class AmbiClimateHeaterCoolerAccessory {
       default:
         break;
     }
+
     callback(null, this.currentHeaterCoolerState);
   }
 
@@ -154,35 +161,46 @@ export class AmbiClimateHeaterCoolerAccessory {
           }
         }
       });
+    } else {
+      const deviceInfo = this.client.getDeviceInfo(this.displayName);
+      this.isOn = deviceInfo.mode !== 'Off' && deviceInfo.mode !== 'Manual';
+      const state = this.isOn ? this.platform.Characteristic.Active.ACTIVE : this.platform.Characteristic.Active.INACTIVE;
+      this.service.updateCharacteristic(this.platform.Characteristic.Active, state);
     }
 
     callback(null, this.isOn);
   }
 
   serviceActiveSet(value: CharacteristicValue, callback: CharacteristicSetCallback) {
-    
-    const acswitch = this.platform.devicePair[this.uuid]['switch'] as AmbiClimateAirConditionAccessory;
-
+    const acSwitch = this.platform.devicePair[this.uuid]['switch'] as AmbiClimateAirConditionerAccessory;
     if (value === this.platform.Characteristic.Active.ACTIVE) {
       this.settings.value = this.currentTemperature;
-      
+
       if (!this.experimental) {
         this.client.temperature(this.settings, null);
+      } else {
+        this.client.setDeviceTemperature(this.displayName, this.settings.value);
       }
-      
-      // update basic switch 
-      acswitch.switchServcie.updateCharacteristic(this.platform.Characteristic.On, true);
-      acswitch.fanService.updateCharacteristic(this.platform.Characteristic.On, true);
-      acswitch.fanService.updateCharacteristic(this.platform.Characteristic.RotationSpeed, 50.0);
-      acswitch.isFanOn = true;
-    } else {
-      this.client.off(this.settings, null);
 
       // update basic switch 
-      acswitch.switchServcie.updateCharacteristic(this.platform.Characteristic.On, false);
-      acswitch.fanService.updateCharacteristic(this.platform.Characteristic.On, false);
-      acswitch.fanService.updateCharacteristic(this.platform.Characteristic.RotationSpeed, 0.0);
-      acswitch.isFanOn = false;
+      acSwitch.switchServcie.updateCharacteristic(this.platform.Characteristic.On, true);
+      acSwitch.fanService.updateCharacteristic(this.platform.Characteristic.On, true);
+      acSwitch.fanService.updateCharacteristic(this.platform.Characteristic.RotationSpeed, 50.0);
+      acSwitch.isFanOn = true;
+    } else {
+      if (!this.experimental) {
+        this.client.off(this.settings, null);
+      } else {
+        this.client.setDeviceSwitch(this.displayName, false).then(() => {
+          this.client.fetchStatus(true);
+        });
+      }
+
+      // update basic switch 
+      acSwitch.switchServcie.updateCharacteristic(this.platform.Characteristic.On, false);
+      acSwitch.fanService.updateCharacteristic(this.platform.Characteristic.On, false);
+      acSwitch.fanService.updateCharacteristic(this.platform.Characteristic.RotationSpeed, 0.0);
+      acSwitch.isFanOn = false;
     }
 
     callback(null);
@@ -209,7 +227,7 @@ export class AmbiClimateHeaterCoolerAccessory {
                     this.currentHeaterCoolerState = this.platform.Characteristic.CurrentHeaterCoolerState.IDLE;
                     break;
                 }
-  
+
                 this.service.updateCharacteristic(this.platform.Characteristic.TargetHeaterCoolerState, this.targetHeaterCoolerState);
               });
             }
@@ -228,6 +246,26 @@ export class AmbiClimateHeaterCoolerAccessory {
           }
         }
       });
+    } else {
+      const deviceInfo = this.client.getDeviceInfo(this.displayName);
+      if (deviceInfo.mode !== 'Off' && deviceInfo.mode !== 'Manual') {
+        switch (deviceInfo.appliance_mode) {
+          case 'Heat':
+            this.targetHeaterCoolerState = this.platform.Characteristic.TargetHeaterCoolerState.HEAT;
+            this.currentHeaterCoolerState = this.platform.Characteristic.CurrentHeaterCoolerState.HEATING;
+            break;
+          case 'Cool':
+            this.targetHeaterCoolerState = this.platform.Characteristic.TargetHeaterCoolerState.COOL;
+            this.currentHeaterCoolerState = this.platform.Characteristic.CurrentHeaterCoolerState.COOLING;
+            break;
+          default:
+            this.targetHeaterCoolerState = this.platform.Characteristic.TargetHeaterCoolerState.AUTO;
+            this.currentHeaterCoolerState = this.platform.Characteristic.CurrentHeaterCoolerState.IDLE;
+            break;
+        }
+
+        this.service.updateCharacteristic(this.platform.Characteristic.TargetHeaterCoolerState, this.targetHeaterCoolerState);
+      }
     }
 
     callback(null, this.targetHeaterCoolerState);
@@ -244,14 +282,22 @@ export class AmbiClimateHeaterCoolerAccessory {
   }
 
   serviceHeatingThresholdTemperatureSet(value: CharacteristicValue, callback: CharacteristicSetCallback) {
+    // Ambi Climate API doesn't support temperature > 32C.
+    if (value > 32.0) {
+      value = 32.0;
+    }
     if (this.currentTemperature < value) {
       this.settings.value = value as number;
-      
+
       if (!this.experimental) {
         this.client.temperature(this.settings, (err, data) => {
           if (err) {
             this.log.error('Set ac heating threshold failed.' + err + JSON.stringify(data));
           }
+        });
+      } else {
+        this.client.setDeviceTemperature(this.displayName, this.settings.value).then(() => {
+          this.client.fetchStatus(true);
         });
       }
     }
@@ -267,14 +313,22 @@ export class AmbiClimateHeaterCoolerAccessory {
   }
 
   serviceCoolingThresholdTemperatureSet(value: CharacteristicValue, callback: CharacteristicSetCallback) {
+    // Ambi Climate API doesn't support temperature < 18C.
+    if (value < 18.0) {
+      value = 18.0;
+    }
     if (this.currentTemperature > value) {
       this.settings.value = value as number;
-      
+
       if (!this.experimental) {
         this.client.temperature(this.settings, (err, data) => {
           if (err) {
             this.log.error('Set ac heating threshold failed.' + err + JSON.stringify(data));
           }
+        });
+      } else {
+        this.client.setDeviceTemperature(this.displayName, this.settings.value).then(() => {
+          this.client.fetchStatus(true);
         });
       }
     }

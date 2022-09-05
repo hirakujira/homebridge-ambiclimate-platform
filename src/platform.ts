@@ -1,7 +1,8 @@
 import { API, DynamicPlatformPlugin, Logger, PlatformAccessory, PlatformConfig, Service, Characteristic } from 'homebridge';
 
 import { PLATFORM_NAME, PLUGIN_NAME } from './settings';
-import { AmbiClimateAirConditionAccessory } from './airconditionAccessory';
+import { AmbiClimateClient } from './client';
+import { AmbiClimateAirConditionerAccessory } from './airConditionerAccessory';
 import { AmbiClimateFeedbackAccessory } from './feedbackAccessory';
 import { AmbiClimateHeaterCoolerAccessory } from './heaterCoolerAccessory';
 import ambiclimate from 'node-ambiclimate';
@@ -48,6 +49,8 @@ export class AmbiClimatePlatform implements DynamicPlatformPlugin {
       if (this.config.experimental) {
         this.log.info('Experimental mode enabled');
         this.experimental = true;
+        this.client = new AmbiClimateClient(this);
+        this.client.start();
       } else {
         this.startClient();
       }
@@ -137,7 +140,7 @@ export class AmbiClimatePlatform implements DynamicPlatformPlugin {
         // the accessory already exists
         if (device) {
           // create the accessory handler for the restored accessory
-          new AmbiClimateAirConditionAccessory(this, existingAccessory);
+          new AmbiClimateAirConditionerAccessory(this, existingAccessory);
 
           // update accessory cache with any changes to the accessory details and information
           this.api.updatePlatformAccessories([existingAccessory]);
@@ -153,7 +156,7 @@ export class AmbiClimatePlatform implements DynamicPlatformPlugin {
 
         // create the accessory handler for the newly create accessory
         // this is imported from `platformAccessory.ts`
-        new AmbiClimateAirConditionAccessory(this, accessory);
+        new AmbiClimateAirConditionerAccessory(this, accessory);
 
         // link the accessory to your platform
         this.api.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [accessory]);

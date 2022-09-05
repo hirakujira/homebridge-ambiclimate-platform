@@ -8,7 +8,7 @@ import { AmbiClimateHeaterCoolerAccessory } from './heaterCoolerAccessory';
  * An instance of this class is created for each accessory your platform registers
  * Each accessory may expose multiple services of different service types.
  */
-export class AmbiClimateAirConditionAccessory {
+export class AmbiClimateAirConditionerAccessory {
   private temperatureService: Service;
   private humidityService: Service;
   public fanService: Service;
@@ -22,6 +22,7 @@ export class AmbiClimateAirConditionAccessory {
 
   private experimental = false;
   private uuid = '';
+  private displayName = '';
   private settings = {
     room_name: '',
     location_name: '',
@@ -43,7 +44,7 @@ export class AmbiClimateAirConditionAccessory {
     this.accessory.getService(this.platform.Service.AccessoryInformation)!
       .setCharacteristic(this.platform.Characteristic.Manufacturer, 'Ambi')
       .setCharacteristic(this.platform.Characteristic.Model, 'AmbiClimate')
-      .setCharacteristic(this.platform.Characteristic.SerialNumber, this.accessory.UUID.split('-')[4]);
+      .setCharacteristic(this.platform.Characteristic.SerialNumber, this.accessory.UUID.split('-')[4].toUpperCase());
 
     // get services if it exists, otherwise create a new service
     this.temperatureService = this.accessory.getService(this.platform.Service.TemperatureSensor) ||
@@ -54,11 +55,11 @@ export class AmbiClimateAirConditionAccessory {
     this.switchServcie = this.accessory.getService(this.platform.Service.Switch) || this.accessory.addService(this.platform.Service.Switch);
 
     // set the service name, this is what is displayed as the default name on the Home app
-    const displayName = accessory.context.device.locationName + accessory.context.device.roomName;
-    this.temperatureService.setCharacteristic(this.platform.Characteristic.Name, displayName);
-    this.humidityService.setCharacteristic(this.platform.Characteristic.Name, displayName);
-    this.fanService.setCharacteristic(this.platform.Characteristic.Name, displayName);
-    this.switchServcie.setCharacteristic(this.platform.Characteristic.Name, displayName);
+    this.displayName = `${accessory.context.device.locationName} ${accessory.context.device.roomName}`;
+    this.temperatureService.setCharacteristic(this.platform.Characteristic.Name, this.displayName);
+    this.humidityService.setCharacteristic(this.platform.Characteristic.Name, this.displayName);
+    this.fanService.setCharacteristic(this.platform.Characteristic.Name, this.displayName);
+    this.switchServcie.setCharacteristic(this.platform.Characteristic.Name, this.displayName);
 
     this.temperatureService.getCharacteristic(this.platform.Characteristic.CurrentTemperature)
       .on('get', this.temperatureServiceCurrentTemperatureGet.bind(this));
@@ -97,9 +98,9 @@ export class AmbiClimateAirConditionAccessory {
             this.temperatureService.updateCharacteristic(this.platform.Characteristic.CurrentTemperature, data[0].value);
           } catch (error) {
             if (data) {
-              this.log.error('Get current tempature failed.' + JSON.stringify(data));
+              this.log.error('Get current temperature failed.' + JSON.stringify(data));
             } else {
-              this.log.error('Get current tempature failed.' + error);
+              this.log.error('Get current temperature failed.' + error);
             }
           }
         } else {
@@ -110,6 +111,10 @@ export class AmbiClimateAirConditionAccessory {
           }
         }
       });
+    } else {
+      const deviceInfo = this.client.getDeviceInfo(this.displayName);
+      this.currentTemperature = deviceInfo.temperature;
+      this.temperatureService.updateCharacteristic(this.platform.Characteristic.CurrentTemperature, deviceInfo.temperature);
     }
 
     callback(null, this.currentTemperature);
@@ -137,6 +142,10 @@ export class AmbiClimateAirConditionAccessory {
           }
         }
       });
+    } else {
+      const deviceInfo = this.client.getDeviceInfo(this.displayName);
+      this.currentRelativeHumidity = deviceInfo.humidity;
+      this.humidityService.updateCharacteristic(this.platform.Characteristic.CurrentRelativeHumidity, deviceInfo.humidity);
     }
 
     callback(null, this.currentRelativeHumidity);
@@ -173,6 +182,19 @@ export class AmbiClimateAirConditionAccessory {
           }
         }
       });
+    } else {
+      const deviceInfo = this.client.getDeviceInfo(this.displayName);
+      switch (deviceInfo.mode) {
+        case 'Off':
+        case 'Manual':
+          this.isFanOn = false;
+          this.fanService.updateCharacteristic(this.platform.Characteristic.On, false);
+          break;
+        default:
+          this.isFanOn = true;
+          this.fanService.updateCharacteristic(this.platform.Characteristic.On, true);
+          break;
+      }
     }
 
     callback(null, this.isFanOn);
@@ -217,11 +239,11 @@ export class AmbiClimateAirConditionAccessory {
                     case 'Med':
                       this.rotationSpeed = 50.0;
                       break;
-                    case 'Quiet':
                     case 'Med-Low':
+                    case 'Low':
                       this.rotationSpeed = 38.0;
                       break;
-                    case 'Low':
+                    case 'Quiet':
                       this.rotationSpeed = 25.0;
                       break;
                     default:
@@ -247,6 +269,39 @@ export class AmbiClimateAirConditionAccessory {
           }
         }
       });
+    } else {
+      const deviceInfo = this.client.getDeviceInfo(this.displayName);
+      switch (deviceInfo.mode) {
+        case 'Off':
+        case 'Manual':
+          this.fanService.updateCharacteristic(this.platform.Characteristic.RotationSpeed, 0);
+          break;
+        default:
+          this.rotationSpeed = 0.0;
+          switch (deviceInfo.fan) {
+            case 'High':
+              this.rotationSpeed = 100.0;
+              break;
+            case 'Med-High':
+              this.rotationSpeed = 75.0;
+              break;
+            case 'Auto':
+            case 'Med':
+              this.rotationSpeed = 50.0;
+              break;
+            case 'Med-Low':
+            case 'Low':
+              this.rotationSpeed = 38.0;
+              break;
+            case 'Quiet':
+              this.rotationSpeed = 25.0;
+              break;
+            default:
+              this.rotationSpeed = 0.0;
+              break;
+          }
+          this.fanService.updateCharacteristic(this.platform.Characteristic.RotationSpeed, this.rotationSpeed);
+      }
     }
   }
 
@@ -280,6 +335,9 @@ export class AmbiClimateAirConditionAccessory {
           }
         }
       });
+    } else {
+      const deviceInfo = this.client.getDeviceInfo(this.displayName);
+      this.switchServcie.updateCharacteristic(this.platform.Characteristic.On, deviceInfo.mode !== 'Off' && deviceInfo.mode !== 'Manual');
     }
 
     callback(null, false);
@@ -334,11 +392,11 @@ export class AmbiClimateAirConditionAccessory {
             try {
               this.switchServcie.updateCharacteristic(this.platform.Characteristic.On, false);
 
-              // update fan rstatus
+              // update fan status
               this.isFanOn = false;
+              this.rotationSpeed = 0.0;
               this.fanService.updateCharacteristic(this.platform.Characteristic.On, false);
               this.fanService.updateCharacteristic(this.platform.Characteristic.RotationSpeed, 0.0);
-              this.rotationSpeed = 0.0;
 
               // update heater cooler if exists
               if (this.platform.config.heaterCoolerMode) {
@@ -363,6 +421,57 @@ export class AmbiClimateAirConditionAccessory {
               this.log.error('Set switch status failed.' + err);
             }
           }
+        });
+      }
+    } else {
+      if (value === true) {
+        this.log.debug('Putting into comfort mode');
+        this.client.setDeviceSwitch(this.displayName, true).then(() => {
+          this.client.fetchStatus(true).then(() => {
+            this.switchServcie.updateCharacteristic(this.platform.Characteristic.On, true);
+
+            // update fan status
+            this.isFanOn = true;
+            this.fanService.updateCharacteristic(this.platform.Characteristic.On, true);
+            this.updateFanRotationSpeed();
+
+            // update heater cooler if exists
+            if (this.platform.config.heaterCoolerMode) {
+              const heaterCooler = this.platform.devicePair[this.uuid]['heaterCooler'];
+              heaterCooler.service.updateCharacteristic(this.platform.Characteristic.TargetHeaterCoolerState,
+                this.platform.Characteristic.TargetHeaterCoolerState.AUTO);
+              heaterCooler.service.updateCharacteristic(this.platform.Characteristic.CurrentHeaterCoolerState,
+                this.platform.Characteristic.CurrentHeaterCoolerState.IDLE);
+              heaterCooler.service.updateCharacteristic(this.platform.Characteristic.Active,
+                this.platform.Characteristic.Active.ACTIVE);
+              heaterCooler.isOn = true;
+            }
+          });
+        });
+      } else {
+        this.log.debug('Turning off');
+        this.client.setDeviceSwitch(this.displayName, false).then(() => {
+          // actually, we don't need the then() here.
+          // because we don't need to wait for the API response to update rotation speed.
+          this.client.fetchStatus(true).then(() => {
+            this.switchServcie.updateCharacteristic(this.platform.Characteristic.On, false);
+
+            // update fan status
+            this.isFanOn = false;
+            this.rotationSpeed = 0.0;
+            this.fanService.updateCharacteristic(this.platform.Characteristic.On, false);
+            this.fanService.updateCharacteristic(this.platform.Characteristic.RotationSpeed, 0.0);
+
+            // update heater cooler if exists
+            if (this.platform.config.heaterCoolerMode) {
+              const heaterCooler = this.platform.devicePair[this.uuid]['heaterCooler'] as AmbiClimateHeaterCoolerAccessory;
+              heaterCooler.service.updateCharacteristic(this.platform.Characteristic.CurrentHeaterCoolerState,
+                this.platform.Characteristic.CurrentHeaterCoolerState.IDLE);
+              heaterCooler.service.updateCharacteristic(this.platform.Characteristic.Active,
+                this.platform.Characteristic.Active.INACTIVE);
+              heaterCooler.isOn = false;
+            }
+          });
         });
       }
     }
