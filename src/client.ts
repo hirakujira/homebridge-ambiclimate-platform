@@ -88,7 +88,7 @@ export class AmbiClimateClient {
   async fetchStatus(force = false) {
     // Allow Update every 4 minutes and 30 seconds
     if (Date.now() - this.lastUpdateTime < 1000 * 60 * 4.5 && !force) {
-      this.log.info('Skip fetching status');
+      this.log.error('Skip fetching status');
       return;
     }
 
@@ -123,7 +123,7 @@ export class AmbiClimateClient {
         }
 
         this.lastUpdateTime = Date.now();
-        this.log.info('Fetching status success');
+        this.log.error('Fetching status success');
       } catch (error) {
         if (error instanceof Error) {
           this.log.error(error.message);
