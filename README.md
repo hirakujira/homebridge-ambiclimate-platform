@@ -1,5 +1,8 @@
 # Homebridge Ambi Climate Platform
 
+
+## ⚠️ Ambi Climate Services will be shut down from April 1 2024, please read the [official announcement](https://www.ambiclimate.com/) ⚠️
+
 Inspired by [homebridge-ambiclimate](https://github.com/alisdairjsmyth/homebridge-ambiclimate). This plugin supports these features for Ambi Climate devices:
 
 * Show current temperature
